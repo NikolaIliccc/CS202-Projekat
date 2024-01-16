@@ -1,8 +1,5 @@
 package Scene;
 
-
-
-
 import Entiteti.Odgovor;
 import Entiteti.Pitanja;
 import database.PitanjaDAO;
@@ -93,7 +90,7 @@ public class Kviz extends Application {
         PrikaziPitanje();
     }
 
-    private void PrikaziPitanje() {
+    public void PrikaziPitanje() {
         odgovoreno = false; // Resetujemo status odgovora za novo pitanje
 
         if (trenutnoPitanjeIndex < pitanja.size()) {
@@ -136,7 +133,7 @@ public class Kviz extends Application {
         }
     }
 
-    private void startTimer() {
+    public void startTimer() {
         Thread timerThread = new Thread(() -> {
             try {
                 while (remainingTime > 0) {
@@ -155,7 +152,7 @@ public class Kviz extends Application {
         timerThread.start();
     }
 
-    private void AzurirajTimerLabel() {
+    public void AzurirajTimerLabel() {
         Platform.runLater(() -> {
             int minutes = remainingTime / 60;
             int seconds = remainingTime % 60;
@@ -164,7 +161,7 @@ public class Kviz extends Application {
         });
     }
 
-    private void ZavrsiKviz() {
+    public void ZavrsiKviz() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Kviz završen");
@@ -177,7 +174,7 @@ public class Kviz extends Application {
         });
     }
 
-    private void PrikaziSledecePitanje() {
+    public void PrikaziSledecePitanje() {
         sacuvajPitanje();
 
         trenutnoPitanjeIndex++;
@@ -190,7 +187,7 @@ public class Kviz extends Application {
         }
     }
 
-    private ToggleGroup ToggleGroupForQuestion(Pitanja currentQuestion) {
+    public ToggleGroup ToggleGroupForQuestion(Pitanja currentQuestion) {
         ToggleGroup toggleGroup = new ToggleGroup();
 
         RadioButton opcija1 = new RadioButton(currentQuestion.getOpcija1());
@@ -204,13 +201,13 @@ public class Kviz extends Application {
         return toggleGroup;
     }
 
-    private String TrenutnoVreme() {
+    public String TrenutnoVreme() {
         LocalDate danas = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         return danas.format(formatter);
     }
 
-    private void sacuvajPitanje() {
+    public void sacuvajPitanje() {
         if (!odgovoreno) {
             Pitanja trenutnoPitanje = pitanja.get(trenutnoPitanjeIndex);
             RadioButton selectedRadioButton = (RadioButton) toggleGroup.getSelectedToggle();

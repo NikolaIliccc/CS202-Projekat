@@ -1,11 +1,11 @@
 package Scene;
 
-
-
-
-import Scene.StudentInfo;
 import Main.Main;
-import database.StudentDAO;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,9 +22,11 @@ public class StudentLogin extends Application {
     private TextField usernameField;
     private PasswordField passwordField;
     private Background background;
+    private Scene pocetnaScena;
 
-    public StudentLogin(Background background) {
+    public StudentLogin(Background background, Scene pocetnaScena) {
         this.background = background;
+        this.pocetnaScena = pocetnaScena;
     }
 
     @Override
@@ -43,13 +45,15 @@ public class StudentLogin extends Application {
         passwordField.setMinWidth(200);
 
         Button loginButton = new Button("Login");
-        loginButton.setOnAction(e -> Login(primaryStage));
+        loginButton.setOnAction(e -> Login(usernameField.getText(), passwordField.getText(), primaryStage));
 
         Button backButton = new Button("Nazad na Pocetnu");
         backButton.setOnAction(e -> {
-            Main mainApp = new Main();
-            mainApp.start(primaryStage);
+            // Vratite se na pocetnu scenu
+            primaryStage.setScene(pocetnaScena);
+            primaryStage.show();
         });
+
         usernameField.setOnKeyPressed(event -> handleEnterKeyPress(event.getCode(), primaryStage));
         passwordField.setOnKeyPressed(event -> handleEnterKeyPress(event.getCode(), primaryStage));
 
@@ -65,7 +69,7 @@ public class StudentLogin extends Application {
         passwordBox.getChildren().addAll(passwordField);
         passwordBox.setAlignment(Pos.CENTER);
 
-        layout.getChildren().addAll(welcomeLabel,usernameBox, passwordBox, loginButton, backButton);
+        layout.getChildren().addAll(welcomeLabel, usernameBox, passwordBox, loginButton, backButton);
 
         layout.setAlignment(Pos.CENTER);
 
@@ -80,13 +84,31 @@ public class StudentLogin extends Application {
 
     }
 
-    private void Login(Stage primaryStage) {
-        String username = usernameField.getText();
-        String password = passwordField.getText();
+    private void Login(String username, String password, Stage primaryStage) {
+        if (validateInput(username, password)) {
+            try (Socket socket = new Socket("localhost", 12335)) {
+                // Slanje informacija serveru
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                out.println("STUDENT_LOGIN " + username + " " + password);
 
-        if (validateInput(username, password) && StudentDAO.proveraStudenta(username, password)) {
-            prikaziUspesanLogin();
-            openStudentInfo(primaryStage, username);
+                // Čekanje odgovora servera
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = in.readLine();
+                System.out.println("Odgovor servera: " + response);
+
+                // Ovde možete obraditi odgovor servera
+                if ("OK".equals(response)) {
+                    prikaziUspesanLogin();
+                    openStudentInfo(primaryStage,username);
+                } else if ("FAIL".equals(response)) {
+                    PrikaziNeuspesanLogin();
+                } else {
+                    System.out.println("Nepoznat odgovor od servera: " + response);
+                }
+            } catch (IOException e) {
+                PrikaziNeuspesanLogin();
+                System.err.println("Greska prilikom povezivanja sa serverom: " + e.getMessage());
+            }
         } else {
             PrikaziNeuspesanLogin();
         }
@@ -119,13 +141,12 @@ public class StudentLogin extends Application {
 
     private void handleEnterKeyPress(KeyCode keyCode, Stage primaryStage) {
         if (keyCode == KeyCode.ENTER) {
-            Login(primaryStage);
+            Login(usernameField.getText(), passwordField.getText(), primaryStage);
         }
     }
 
     private void openStudentInfo(Stage primaryStage, String username) {
         primaryStage.close();
-
         StudentInfo studentInfoApp = new StudentInfo(username, background);
         Stage infoStage = new Stage();
         studentInfoApp.start(infoStage);

@@ -1,10 +1,11 @@
 package Scene;
 
-
-
-
 import Main.Main;
-import database.ProfesorDAO;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -28,8 +29,10 @@ public class ProfesorLogin extends Application {
     private TextField usernameField;
     private PasswordField passwordField;
     private Background background;
+    private Scene pocetnaScena;
 
-    public ProfesorLogin(Background background) {
+    public ProfesorLogin(Background background, Scene pocetnaScena) {
+        this.pocetnaScena = pocetnaScena;
         this.background = background;
     }
 
@@ -52,8 +55,13 @@ public class ProfesorLogin extends Application {
 
         Button backButton = new Button("Nazad na Pocetnu");
         backButton.setOnAction(e -> {
-            Main mainApp = new Main();
-            mainApp.start(primaryStage);
+            // Get the existing stage
+            Stage stage = (Stage) backButton.getScene().getWindow();
+
+            // Set the scene to the initial scene (pocetnaScena)
+            stage.setScene(pocetnaScena);
+            // Show the stage again
+            stage.show();
         });
 
         usernameField.setOnKeyPressed(event -> EnterKeyPress(event.getCode(), primaryStage));
@@ -72,7 +80,7 @@ public class ProfesorLogin extends Application {
         passwordBox.getChildren().addAll(passwordField);
         passwordBox.setAlignment(Pos.CENTER);
 
-        layout.getChildren().addAll(welcomeLabel,usernameBox, passwordBox, loginButton, backButton);
+        layout.getChildren().addAll(welcomeLabel, usernameBox, passwordBox, loginButton, backButton);
 
         layout.setAlignment(Pos.CENTER);
 
@@ -87,10 +95,30 @@ public class ProfesorLogin extends Application {
     }
 
     private void Login(String username, String password, Stage primaryStage) {
-        if (ProfesorDAO.proveraProfesora(username, password)) {
-            prikaziUspesanLogin();
-            openProfesorDashboard(primaryStage);
-            primaryStage.close();
+        if (validateInput(username, password)) {
+            try (Socket socket = new Socket("localhost", 12335)) {
+                // Slanje informacija serveru
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                out.println("PROFESOR_LOGIN " + username + " " + password);
+
+                // Čekanje odgovora servera
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String response = in.readLine();
+                System.out.println("Odgovor servera: " + response);
+
+                // Ovde možete obraditi odgovor servera
+                if ("OK".equals(response)) {
+                    prikaziUspesanLogin();
+                    openProfesorDashboard(primaryStage);
+                } else if ("FAIL".equals(response)) {
+                    PrikaziNeuspesanLogin();
+                } else {
+                    System.out.println("Nepoznat odgovor od servera: " + response);
+                }
+            } catch (IOException e) {
+                PrikaziNeuspesanLogin();
+                System.err.println("Greska prilikom povezivanja sa serverom: " + e.getMessage());
+            }
         } else {
             PrikaziNeuspesanLogin();
         }
@@ -102,6 +130,15 @@ public class ProfesorLogin extends Application {
         alert.setHeaderText(null);
         alert.setContentText("Login uspesan!");
         alert.showAndWait();
+    }
+
+    private boolean validateInput(String... fields) {
+        for (String field : fields) {
+            if (field.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void PrikaziNeuspesanLogin() {
@@ -119,9 +156,9 @@ public class ProfesorLogin extends Application {
     }
 
     private void openProfesorDashboard(Stage primaryStage) {
-        ProfesorDashboard profesorDashboard = new ProfesorDashboard(background);
-        Stage dashboardStage = new Stage();
-        profesorDashboard.start(dashboardStage);
+        primaryStage.close();
+        ProfesorDashboard profesorDashboard = new ProfesorDashboard(background, pocetnaScena);
+        profesorDashboard.start(primaryStage);
 
     }
 

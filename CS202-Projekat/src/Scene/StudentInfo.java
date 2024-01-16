@@ -159,7 +159,7 @@ public class StudentInfo extends Application {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Save Successful");
         alert.setHeaderText(null);
-        alert.setContentText("Student information saved successfully!");
+        alert.setContentText("Uspesno ste sacuvali podatke!");
         alert.showAndWait();
     }
 
@@ -167,7 +167,7 @@ public class StudentInfo extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Save Failed");
         alert.setHeaderText(null);
-        alert.setContentText("Please fill in all fields before saving.");
+        alert.setContentText("Molimo unesite sve podatke pre cuvanja.");
         alert.showAndWait();
     }
 

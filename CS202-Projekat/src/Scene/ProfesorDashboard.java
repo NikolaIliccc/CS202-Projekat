@@ -10,6 +10,8 @@ import exceptions.PitanjeNijePronadjenoException;
 import exceptions.PrazanException;
 import java.util.List;
 import javafx.application.Application;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -23,42 +25,30 @@ import javafx.stage.Stage;
 public class ProfesorDashboard extends Application {
 
     private Background background;
+    private Scene pocetnaScena;
 
-    public ProfesorDashboard(Background background) {
+    public ProfesorDashboard(Background background, Scene pocetnaScena) {
         this.background = background;
+        this.pocetnaScena = pocetnaScena;
     }
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Profesor Dashboard");
 
-        Button NovoPitanje = Dugme("Novo Pitanje");
-        NovoPitanje.setOnAction(e -> prikaziDodajPitanjeFormu());
+        Button novoPitanje = createButton("Novo Pitanje", e -> prikaziDodajPitanjeFormu());
+        Button azurirajPitanje = createButton("Azuriraj Pitanje", e -> prikaziAzuriranuFormu());
+        Button svaPitanja = createButton("Sva Pitanja", e -> prikaziTabeluSvihPitanja());
+        Button izbrisiPitanje = createButton("Izbrisi Pitanje", e -> prikaziFormuZaBrisanje());
+        Button sviRezultati = createButton("Student Rezultati", e -> prikaziSveRezultateStudenata());
+        Button logoutButton = createButton("Logout", e -> logout(primaryStage));
 
-        Button AzurirajPitanje = Dugme("Azuriraj Pitanje");
-        AzurirajPitanje.setOnAction(e -> prikaziAzuriranuFormu());
-
-        Button SvaPitanja = Dugme("Sva Pitanja");
-        SvaPitanja.setOnAction(e -> prikaziTabeluSvihPitanja());
-
-        Button IzbrisiPitanje = Dugme("Izbrisi Pitanje");
-        IzbrisiPitanje.setOnAction(e -> prikaziFormuZaBrisanje());
-
-        Button SviRezultati = Dugme("Student Rezultati");
-        SviRezultati.setOnAction(e -> prikaziSveRezultateStudenata());
-
-        Button logoutButton = Dugme("Logout");
-        logoutButton.setOnAction(e -> logout(primaryStage));
-
-        HBox topMenu = new HBox(10);
-        topMenu.getChildren().addAll(NovoPitanje, AzurirajPitanje, SvaPitanja, IzbrisiPitanje,
-                SviRezultati, logoutButton);
+        HBox topMenu = new HBox(10, novoPitanje, azurirajPitanje, svaPitanja, izbrisiPitanje, sviRezultati, logoutButton);
         topMenu.setAlignment(Pos.TOP_LEFT);
         topMenu.setPadding(new Insets(10, 10, 10, 10));
 
-        VBox layout = new VBox(10);
+        VBox layout = new VBox(10, topMenu);
         layout.setPadding(new Insets(10, 10, 10, 10));
-        layout.getChildren().addAll(topMenu);
         layout.setBackground(background);
 
         Scene scene = new Scene(layout, 650, 400);
@@ -68,8 +58,31 @@ public class ProfesorDashboard extends Application {
         primaryStage.setMaxHeight(450);
         primaryStage.setMinWidth(650);
         primaryStage.setMinHeight(450);
-
     }
+
+    private Button createButton(String text, EventHandler<ActionEvent> eventHandler) {
+        Button button = new Button(text);
+        button.setMinSize(80, 20);
+        button.setOnAction(eventHandler);
+        return button;
+    }
+
+   private void logout(Stage primaryStage) {
+    Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
+    confirmationAlert.setTitle("Logout");
+    confirmationAlert.setHeaderText(null);
+    confirmationAlert.setContentText("Da li ste sigurni da zelite da se izlogujete?");
+
+    confirmationAlert.showAndWait().ifPresent(response -> {
+        if (response == ButtonType.OK) {
+            // Set the primary stage to the initial scene
+            primaryStage.setScene(pocetnaScena);
+            // Show the primary stage again
+            primaryStage.show();
+        }
+    });
+}
+
 
     private void prikaziSveRezultateStudenata() {
         Stage allResultsStage = new Stage();
@@ -262,27 +275,35 @@ public class ProfesorDashboard extends Application {
 
         Button updateButton = new Button("Azuriraj Pitanje");
         updateButton.setOnAction(e -> {
-            try {
-                int questionId = Integer.parseInt(idField.getText());
-                Pitanja existingQuestion = PitanjaDAO.getQuestionById(questionId);
+            String inputText = idField.getText().trim();
 
-                if (existingQuestion != null) {
-                    Pitanja updatedQuestion = new Pitanja(
-                            pitanjeField.getText(),
-                            opcija1Field.getText(),
-                            opcija2Field.getText(),
-                            opcija3Field.getText(),
-                            odgovorField.getText()
-                    );
+            if (inputText.isEmpty()) {
+                showAlert("Prazan Unos", "Molimo unesite Pitanje ID.");
+            } else {
+                try {
+                    int questionId = Integer.parseInt(inputText);
+                    Pitanja existingQuestion = PitanjaDAO.getQuestionById(questionId);
 
-                    PitanjaDAO.azurirajPitanje(questionId, updatedQuestion);
-                    updateQuestionStage.close();
-                } else {
-                    showAlert("Pitanje nije pronadjeno", "Nijedno pitanje nije pronadjeno sa ID: " + questionId);
+                    if (existingQuestion != null) {
+                        Pitanja updatedQuestion = new Pitanja(
+                                pitanjeField.getText(),
+                                opcija1Field.getText(),
+                                opcija2Field.getText(),
+                                opcija3Field.getText(),
+                                odgovorField.getText()
+                        );
+
+                        PitanjaDAO.azurirajPitanje(questionId, updatedQuestion);
+                        updateQuestionStage.close();
+                    } else {
+                        showAlert("Pitanje nije pronadjeno", "Nijedno pitanje nije pronadjeno sa ID: " + questionId);
+                    }
+                } catch (NumberFormatException ex) {
+                    showAlert("Pogresan Unos", "Molimo unesite ispravan broj za Pitanje ID.");
+                } catch (OpcijaException | OdgovorException | PrazanException ex) {
+                    // Handle the exceptions here, show an alert, log, etc.
+                    showAlert("Greska", ex.getMessage());
                 }
-            } catch (OpcijaException | OdgovorException | PrazanException ex) {
-                // Handle the exceptions here, show an alert, log, etc.
-                showAlert("Greska", ex.getMessage());
             }
         });
 
@@ -358,22 +379,6 @@ public class ProfesorDashboard extends Application {
         Button button = new Button(text);
         button.setMinSize(80, 20);
         return button;
-    }
-
-    private void logout(Stage primaryStage) {
-        Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmationAlert.setTitle("Logout");
-        confirmationAlert.setHeaderText(null);
-        confirmationAlert.setContentText("Da li ste sigurni da zelite da se izlogujete?");
-
-        confirmationAlert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                primaryStage.close();
-                ProfesorLogin loginApp = new ProfesorLogin(background);
-                Stage loginStage = new Stage();
-                loginApp.start(loginStage);
-            }
-        });
     }
 
     private void showAlert(String title, String content) {
