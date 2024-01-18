@@ -4,6 +4,9 @@ import Entiteti.Odgovor;
 import Entiteti.Pitanja;
 import database.PitanjaDAO;
 import database.RezultatDAO;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import javafx.application.Application;
@@ -38,10 +41,11 @@ public class Kviz extends Application {
     private ToggleGroup toggleGroup;
     private RezultatDAO rezultatDAO = new RezultatDAO();
     private boolean odgovoreno = false;
+    private RadioButton selectedRadioButton;
 
     public Kviz(Background background, String studentIme, String studentPrezime) {
         this.background = background;
-        this.pitanja = PitanjaDAO.SvaPitanja();
+        this.pitanja = PitanjaDAO.SvaPitanjaIzmesana();
         this.studentIme = studentIme;
         this.studentPrezime = studentPrezime;
         this.currentDate = TrenutnoVreme();
@@ -93,7 +97,7 @@ public class Kviz extends Application {
     public void PrikaziPitanje() {
         odgovoreno = false; // Resetujemo status odgovora za novo pitanje
 
-        if (trenutnoPitanjeIndex < pitanja.size()) {
+        if (trenutnoPitanjeIndex < 10 && trenutnoPitanjeIndex < pitanja.size()) {
             Pitanja trenutnoPitanje = pitanja.get(trenutnoPitanjeIndex);
 
             Label pitanjeLabel = new Label(trenutnoPitanje.getTekstPitanja());
@@ -109,7 +113,7 @@ public class Kviz extends Application {
             opcija3.setToggleGroup(toggleGroup);
 
             VBox radioButtonsLayout = new VBox(5, opcija1, opcija2, opcija3);
-            radioButtonsLayout.setAlignment(Pos.CENTER);
+            radioButtonsLayout.setAlignment(Pos.CENTER); // Postavljanje poravnanja na sredinu
 
             Button nextButton = new Button("Next");
             nextButton.setOnAction(e -> PrikaziSledecePitanje());
@@ -144,7 +148,6 @@ public class Kviz extends Application {
                 ZavrsiKviz();
 
             } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         });
 
@@ -166,7 +169,7 @@ public class Kviz extends Application {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Kviz završen");
             alert.setHeaderText(null);
-            alert.setContentText("Da li ste sigurni da želite zatvoriti kviz?");
+            alert.setContentText("Zavrsili ste kviz!");
             alert.showAndWait();
 
             Stage stage = (Stage) timerLabel.getScene().getWindow();
@@ -177,6 +180,16 @@ public class Kviz extends Application {
     public void PrikaziSledecePitanje() {
         sacuvajPitanje();
 
+        if (!odgovoreno) {
+            // Ako nijedno pitanje nije selectovano izbaciti upozorenje
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Upozorenje");
+            alert.setHeaderText(null);
+            alert.setContentText("Molimo vas označite jedan od odgovora pre nego što nastavite na sledeće pitanje.");
+            alert.showAndWait();
+            return;
+        }
+
         trenutnoPitanjeIndex++;
 
         if (trenutnoPitanjeIndex < pitanja.size()) {
@@ -184,6 +197,30 @@ public class Kviz extends Application {
             PrikaziPitanje();
         } else {
             ZavrsiKviz();
+        }
+        informisiServeroOdgvoru();
+    }
+
+    private void informisiServeroOdgvoru() {
+        if (trenutnoPitanjeIndex - 1 < pitanja.size()) {
+            Pitanja trenutnoPitanje = pitanja.get(trenutnoPitanjeIndex - 1);
+
+            if (selectedRadioButton != null) {
+                String selectedAnswer = selectedRadioButton.getText();
+                String message = "STUDENT_ODGOVOR " + studentIme + " " + studentPrezime
+                        + " Pitanje: " + trenutnoPitanje.getTekstPitanja() + " Odgovor: " + selectedAnswer;
+
+                posaljiServeru(message);
+            }
+        }
+    }
+
+    private void posaljiServeru(String message) {
+        try (Socket socket = new Socket("localhost", 12335)) {
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(message);
+        } catch (IOException e) {
+            System.err.println("Neuspesno slanje podataka na server: " + e.getMessage());
         }
     }
 
@@ -197,6 +234,10 @@ public class Kviz extends Application {
         opcija1.setToggleGroup(toggleGroup);
         opcija2.setToggleGroup(toggleGroup);
         opcija3.setToggleGroup(toggleGroup);
+
+        toggleGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            selectedRadioButton = (RadioButton) newValue;
+        });
 
         return toggleGroup;
     }

@@ -8,6 +8,11 @@ import exceptions.OdgovorException;
 import exceptions.OpcijaException;
 import exceptions.PitanjeNijePronadjenoException;
 import exceptions.PrazanException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.List;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -67,26 +72,29 @@ public class ProfesorDashboard extends Application {
         return button;
     }
 
-   private void logout(Stage primaryStage) {
-    Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
-    confirmationAlert.setTitle("Logout");
-    confirmationAlert.setHeaderText(null);
-    confirmationAlert.setContentText("Da li ste sigurni da zelite da se izlogujete?");
+    private void logout(Stage primaryStage) {
+        try (Socket socket = new Socket("localhost", 12335)) {
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println("LOGOUT");
 
-    confirmationAlert.showAndWait().ifPresent(response -> {
-        if (response == ButtonType.OK) {
-            // Set the primary stage to the initial scene
-            primaryStage.setScene(pocetnaScena);
-            // Show the primary stage again
-            primaryStage.show();
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = in.readLine();
+
+            if ("LOGOUT_OK".equals(response)) {
+                System.out.println("Profesor izlogovan!");
+                primaryStage.setScene(pocetnaScena);
+                primaryStage.show();
+            } else {
+                System.out.println("Logout neuspesno!: " + response);
+            }
+        } catch (IOException e) {
+            System.err.println("Neuspesno konektovanje na server: " + e.getMessage());
         }
-    });
-}
-
+    }
 
     private void prikaziSveRezultateStudenata() {
         Stage allResultsStage = new Stage();
-        allResultsStage.setTitle("All Student Results");
+        allResultsStage.setTitle("Rezultati Studenata");
 
         TableView<Odgovor> tableView = new TableView<>();
         TableColumn<Odgovor, Integer> id = new TableColumn<>("Odgovor ID");
@@ -125,18 +133,18 @@ public class ProfesorDashboard extends Application {
         tableView.getItems().addAll(allResults);
 
         VBox layout = new VBox(filterBox, tableView);
-        Scene scene = new Scene(layout, 890, 450);
+        Scene scene = new Scene(layout, 980, 450);
         allResultsStage.setScene(scene);
         allResultsStage.show();
-        allResultsStage.setMaxWidth(890);
+        allResultsStage.setMaxWidth(980);
         allResultsStage.setMaxHeight(450);
-        allResultsStage.setMinWidth(890);
+        allResultsStage.setMinWidth(980);
         allResultsStage.setMinHeight(450);
     }
 
     private void prikaziDodajPitanjeFormu() {
         Stage addQuestionStage = new Stage();
-        addQuestionStage.setTitle("Add New Question");
+        addQuestionStage.setTitle("Dodaj Novo Pitanje");
 
         Label pitanjelabel = new Label("Pitanje:");
         TextField pitanjeField = new TextField();
@@ -161,6 +169,7 @@ public class ProfesorDashboard extends Application {
                 );
 
                 PitanjaDAO.dodajPitanje(pitanja);
+                sendUpdateMessage("NOVO_PITANJE", pitanja.getIDPitanja(), pitanja.getTekstPitanja());
                 addQuestionStage.close();
             } catch (OpcijaException | OdgovorException | PrazanException ex) {
                 showAlert("Greska", ex.getMessage());
@@ -294,6 +303,7 @@ public class ProfesorDashboard extends Application {
                         );
 
                         PitanjaDAO.azurirajPitanje(questionId, updatedQuestion);
+                        sendUpdateMessage("AZURIRAJ_PITANJE", questionId, updatedQuestion.getTekstPitanja());
                         updateQuestionStage.close();
                     } else {
                         showAlert("Pitanje nije pronadjeno", "Nijedno pitanje nije pronadjeno sa ID: " + questionId);
@@ -301,7 +311,6 @@ public class ProfesorDashboard extends Application {
                 } catch (NumberFormatException ex) {
                     showAlert("Pogresan Unos", "Molimo unesite ispravan broj za Pitanje ID.");
                 } catch (OpcijaException | OdgovorException | PrazanException ex) {
-                    // Handle the exceptions here, show an alert, log, etc.
                     showAlert("Greska", ex.getMessage());
                 }
             }
@@ -326,6 +335,16 @@ public class ProfesorDashboard extends Application {
         updateQuestionStage.show();
     }
 
+    private void sendUpdateMessage(String command, int questionId, String additionalInfo) {
+        try (Socket socket = new Socket("localhost", 12335)) {
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            out.println(command + " " + questionId + " " + additionalInfo);
+        } catch (IOException e) {
+            System.err.println("Neuspesno konektovanje na server: " + e.getMessage());
+        }
+        
+    }
+
     private void prikaziFormuZaBrisanje() {
         Stage deleteQuestionStage = new Stage();
         deleteQuestionStage.setTitle("Izbrisi Pitanje");
@@ -346,6 +365,7 @@ public class ProfesorDashboard extends Application {
                 boolean success = PitanjaDAO.izbrisiPitanjePoId(questionId);
 
                 if (success) {
+                    sendUpdateMessage("OBRISI_PITANJE", questionId, null);
                     showAlert("Uspesno", "Pitanje sa ID " + questionId + " uspesno obrisano.");
                 } else {
                     throw new PitanjeNijePronadjenoException("Nijedno pitanje nije pronadjeno sa ID:" + questionId);
