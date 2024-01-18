@@ -99,7 +99,7 @@ public class Pitanja {
         }
     }
 
-    private boolean jeJednaOdOpcija(String odgovor) {
+    public boolean jeJednaOdOpcija(String odgovor) {
         return odgovor.equals(opcija1) || odgovor.equals(opcija2) || odgovor.equals(opcija3);
     }
 }

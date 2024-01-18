@@ -106,7 +106,7 @@ public class ProfesorLogin extends Application {
                 String response = in.readLine();
                 System.out.println("Odgovor servera: " + response);
 
-                // Ovde možete obraditi odgovor servera
+                // Odgovor servera
                 if ("OK".equals(response)) {
                     prikaziUspesanLogin();
                     openProfesorDashboard(primaryStage);

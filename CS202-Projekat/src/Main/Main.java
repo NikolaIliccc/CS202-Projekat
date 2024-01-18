@@ -25,7 +25,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         Main.primaryStage = primaryStage;
-        primaryStage.setTitle("Start App");
+        primaryStage.setTitle("Start");
 
         String imagePath = "/slike/background.jpg";
         Image backgroundImage = new Image(imagePath);
@@ -60,8 +60,8 @@ public class Main extends Application {
         primaryStage.setMaxHeight(450);
         primaryStage.setMinWidth(710);
         primaryStage.setMinHeight(450);
-
-        // Pokreni server u pozadini u novoj niti
+        
+        
         new Thread(() -> startServer()).start();
 
     }

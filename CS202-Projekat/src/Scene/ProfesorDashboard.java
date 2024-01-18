@@ -1,5 +1,6 @@
 package Scene;
 
+import javafx.scene.paint.Color;
 import Entiteti.Odgovor;
 import Entiteti.Pitanja;
 import database.PitanjaDAO;
@@ -147,14 +148,23 @@ public class ProfesorDashboard extends Application {
         addQuestionStage.setTitle("Dodaj Novo Pitanje");
 
         Label pitanjelabel = new Label("Pitanje:");
+        pitanjelabel.setTextFill(Color.WHITE); // Set text color to white
         TextField pitanjeField = new TextField();
+
         Label opcija1label = new Label("Opcija 1:");
+        opcija1label.setTextFill(Color.WHITE);
         TextField opcija1Field = new TextField();
+
         Label opcija2Label = new Label("Opcija 2:");
+        opcija2Label.setTextFill(Color.WHITE);
         TextField opcija2Field = new TextField();
+
         Label opcija3Label = new Label("Opcija 3:");
+        opcija3Label.setTextFill(Color.WHITE);
         TextField opcija3Field = new TextField();
+
         Label odgoovrLabel = new Label("Odgovor:");
+        odgoovrLabel.setTextFill(Color.WHITE);
         TextField odgovorField = new TextField();
 
         Button dodajPitanje = new Button("Dodaj Pitanje");
@@ -189,6 +199,7 @@ public class ProfesorDashboard extends Application {
         );
 
         Scene addQuestionScene = new Scene(dodajPitanjeLayout, 400, 400);
+        addQuestionScene.setFill(Color.WHITE);
         addQuestionStage.setScene(addQuestionScene);
         addQuestionStage.show();
     }
@@ -241,16 +252,27 @@ public class ProfesorDashboard extends Application {
         updateQuestionStage.setTitle("Azuriraj Pitanja");
 
         Label idLabel = new Label("Pitanje ID:");
+        idLabel.setTextFill(Color.WHITE); // Set text color to white
         TextField idField = new TextField();
+
         Label pitanjeLabel = new Label("Pitanje:");
+        pitanjeLabel.setTextFill(Color.WHITE);
         TextField pitanjeField = new TextField();
+
         Label opcija1Label = new Label("Opcija 1:");
+        opcija1Label.setTextFill(Color.WHITE);
         TextField opcija1Field = new TextField();
+
         Label opcija2Label = new Label("Opcija 2:");
+        opcija2Label.setTextFill(Color.WHITE);
         TextField opcija2Field = new TextField();
+
         Label opcija3Label = new Label("Opcija 3:");
+        opcija3Label.setTextFill(Color.WHITE);
         TextField opcija3Field = new TextField();
-        Label odgovorLabel = new Label("Answer:");
+
+        Label odgovorLabel = new Label("Odgovor:");
+        odgovorLabel.setTextFill(Color.WHITE);
         TextField odgovorField = new TextField();
 
         Button searchButton = new Button("Search");
@@ -342,7 +364,7 @@ public class ProfesorDashboard extends Application {
         } catch (IOException e) {
             System.err.println("Neuspesno konektovanje na server: " + e.getMessage());
         }
-        
+
     }
 
     private void prikaziFormuZaBrisanje() {
@@ -350,6 +372,7 @@ public class ProfesorDashboard extends Application {
         deleteQuestionStage.setTitle("Izbrisi Pitanje");
 
         Label idLabel = new Label("Pitanje ID:");
+        idLabel.setTextFill(Color.WHITE);
         TextField idField = new TextField();
 
         Button deleteButton = new Button("Izbrisi");
@@ -395,7 +418,7 @@ public class ProfesorDashboard extends Application {
         tableView.getItems().addAll(filtriraniRezultati);
     }
 
-    private Button Dugme(String text) {
+    private Button Dugme(String text, EventHandler<ActionEvent> eventHandler) {
         Button button = new Button(text);
         button.setMinSize(80, 20);
         return button;

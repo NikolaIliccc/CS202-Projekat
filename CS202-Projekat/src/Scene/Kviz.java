@@ -26,6 +26,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.List;
+import javafx.scene.paint.Color;
 
 public class Kviz extends Application {
 
@@ -82,7 +83,6 @@ public class Kviz extends Application {
         layout.setBottom(buttonsBox);
 
         Scene scene = new Scene(layout, 710, 400);
-
         primaryStage.setScene(scene);
         primaryStage.show();
         primaryStage.setMaxWidth(710);
@@ -101,19 +101,23 @@ public class Kviz extends Application {
             Pitanja trenutnoPitanje = pitanja.get(trenutnoPitanjeIndex);
 
             Label pitanjeLabel = new Label(trenutnoPitanje.getTekstPitanja());
+            pitanjeLabel.setTextFill(Color.WHITE);
 
             toggleGroup = ToggleGroupForQuestion(trenutnoPitanje);
 
             RadioButton opcija1 = new RadioButton(trenutnoPitanje.getOpcija1());
+            opcija1.setTextFill(Color.WHITE);
             RadioButton opcija2 = new RadioButton(trenutnoPitanje.getOpcija2());
+            opcija2.setTextFill(Color.WHITE);
             RadioButton opcija3 = new RadioButton(trenutnoPitanje.getOpcija3());
+            opcija3.setTextFill(Color.WHITE);
 
             opcija1.setToggleGroup(toggleGroup);
             opcija2.setToggleGroup(toggleGroup);
             opcija3.setToggleGroup(toggleGroup);
 
             VBox radioButtonsLayout = new VBox(5, opcija1, opcija2, opcija3);
-            radioButtonsLayout.setAlignment(Pos.CENTER); // Postavljanje poravnanja na sredinu
+            radioButtonsLayout.setAlignment(Pos.CENTER);
 
             Button nextButton = new Button("Next");
             nextButton.setOnAction(e -> PrikaziSledecePitanje());
@@ -122,8 +126,11 @@ public class Kviz extends Application {
 
             VBox userDataLayout = new VBox(5);
             Label imeLabel = new Label("Ime: " + studentIme);
+            imeLabel.setTextFill(Color.WHITE);
             Label prezimeLabel = new Label("Prezime: " + studentPrezime);
+            prezimeLabel.setTextFill(Color.WHITE);
             Label datumLabel = new Label("Datum: " + currentDate);
+            datumLabel.setTextFill(Color.WHITE);
             userDataLayout.getChildren().addAll(imeLabel, prezimeLabel, datumLabel);
             userDataLayout.setAlignment(Pos.CENTER_LEFT);
 
@@ -161,6 +168,7 @@ public class Kviz extends Application {
             int seconds = remainingTime % 60;
             String formattedTime = String.format("%02d:%02d", minutes, seconds);
             timerLabel.setText("Vreme: " + formattedTime);
+            timerLabel.setTextFill(Color.WHITE);
         });
     }
 
