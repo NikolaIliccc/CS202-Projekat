@@ -2,6 +2,7 @@ package Main;
 
 import Scene.StudentLogin;
 import Scene.ProfesorLogin;
+import ClientServer.Server;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -14,6 +15,7 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
+    private Scene pocetnaScena;
     public static Stage primaryStage;
 
     public static void main(String[] args) {
@@ -27,7 +29,6 @@ public class Main extends Application {
 
         String imagePath = "/slike/background.jpg";
         Image backgroundImage = new Image(imagePath);
-
         BackgroundImage background = new BackgroundImage(
                 backgroundImage,
                 BackgroundRepeat.NO_REPEAT,
@@ -39,7 +40,6 @@ public class Main extends Application {
 
         Label welcomeLabel = new Label("Dobrodošli! Izaberite način logovanja:");
         welcomeLabel.setStyle("-fx-font-size: 25px; -fx-font-weight: bold; -fx-text-fill: white;");
-
 
         Button studentButton = new Button("Student Login");
         studentButton.setOnAction(e -> StudentLogin(backgroundObj));
@@ -53,18 +53,22 @@ public class Main extends Application {
         layout.setAlignment(Pos.CENTER);
         layout.setBackground(backgroundObj);
 
-        Scene scene = new Scene(layout, 710, 400);
-        primaryStage.setScene(scene);
+        pocetnaScena = new Scene(layout, 710, 400);
+        primaryStage.setScene(pocetnaScena);
         primaryStage.show();
         primaryStage.setMaxWidth(710);
         primaryStage.setMaxHeight(450);
         primaryStage.setMinWidth(710);
         primaryStage.setMinHeight(450);
+
+        // Pokreni server u pozadini u novoj niti
+        new Thread(() -> startServer()).start();
+
     }
 
     private void StudentLogin(Background background) {
         try {
-            StudentLogin studentLogin = new StudentLogin(background);
+            StudentLogin studentLogin = new StudentLogin(background, pocetnaScena);
             studentLogin.start(primaryStage);
         } catch (Exception e) {
         }
@@ -72,9 +76,15 @@ public class Main extends Application {
 
     private void ProfesorLogin(Background background) {
         try {
-            ProfesorLogin profesorLogin = new ProfesorLogin(background);
+            ProfesorLogin profesorLogin = new ProfesorLogin(background, pocetnaScena);
             profesorLogin.start(primaryStage);
         } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
+
+    private void startServer() {
+        Server server = new Server();
+        server.startServer();
     }
 }

@@ -32,14 +32,12 @@ public class StudentDAO {
         try (Connection connection = DatabaseConnector.connect();
                 PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-            // Postavite vrednosti parametara u SQL upitu
             preparedStatement.setString(1, student.getName());
             preparedStatement.setString(2, student.getSurname());
             preparedStatement.setString(3, student.getJmbg());
             preparedStatement.setString(4, student.getAddress());
             preparedStatement.setString(5, student.getMobile());
 
-            // Izvršite SQL upit za unos podataka
             preparedStatement.executeUpdate();
 
         } catch (SQLException e) {

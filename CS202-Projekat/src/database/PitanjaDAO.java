@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PitanjaDAO {
@@ -21,7 +22,7 @@ public class PitanjaDAO {
         String sql = "INSERT INTO pitanja (tekstpitanja, opcija1, opcija2, opcija3, odgovor) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection connection = DatabaseConnector.connect();
-                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             preparedStatement.setString(1, pitanja.getTekstPitanja());
             preparedStatement.setString(2, pitanja.getOpcija1());
@@ -29,7 +30,20 @@ public class PitanjaDAO {
             preparedStatement.setString(4, pitanja.getOpcija3());
             preparedStatement.setString(5, pitanja.getOdgovor());
 
-            preparedStatement.executeUpdate();
+            int affectedRows = preparedStatement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new SQLException("Creating question failed, no rows affected.");
+            }
+
+            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    int idPitanja = generatedKeys.getInt(1);
+                    System.out.println("Pitanje je uspešno dodato. ID pitanja: " + idPitanja);
+                } else {
+                    throw new SQLException("Creating question failed, no ID obtained.");
+                }
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -72,14 +86,14 @@ public class PitanjaDAO {
         return null;
     }
 
-    public static List<Pitanja> SvaPitanja() {
+      public static List<Pitanja> SvaPitanja() {
         List<Pitanja> pitanja = new ArrayList<>();
 
         String sql = "SELECT * FROM pitanja";
 
         try (Connection connection = DatabaseConnector.connect();
-                Statement statement = connection.createStatement();
-                ResultSet resultSet = statement.executeQuery(sql)) {
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
                 Pitanja pitanje = IzdvojiPitanjeIzRezultata(resultSet);
@@ -92,6 +106,16 @@ public class PitanjaDAO {
         return pitanja;
     }
 
+    // Retrieve shuffled questions
+    public static List<Pitanja> SvaPitanjaIzmesana() {
+        List<Pitanja> svapitanja = SvaPitanja();
+        List<Pitanja> izmesanapitanja = new ArrayList<>(svapitanja);
+
+        // Shuffle the questions
+        Collections.shuffle(izmesanapitanja);
+
+        return izmesanapitanja;
+    }
     private static Pitanja IzdvojiPitanjeIzRezultata(ResultSet resultSet) throws SQLException {
         Pitanja pitanje = new Pitanja();
         pitanje.setIDPitanja(resultSet.getInt("IDPitanja"));
